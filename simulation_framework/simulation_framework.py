@@ -19,7 +19,7 @@ def run_sim(algorithm, arms, horizon, num_sims=1):
             chosen_arm = algorithm.select_arm()
             chosen_arms[idx] = chosen_arm
             
-            reward = float(arms[chosen_arms[idx]].draw())
+            reward = arms[chosen_arms[idx]].draw()
             rewards[idx] = reward
             
             if t == 0:

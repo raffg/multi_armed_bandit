@@ -11,7 +11,7 @@ class EpsilonGreedy():
 
     def reset(self):
         self.counts = [0] * self.n_arms
-        self.values = [0] * self.n_arms
+        self.values = [0.0] * self.n_arms
 
     def select_arm(self):
         if random.random() > self.epsilon:
@@ -22,7 +22,6 @@ class EpsilonGreedy():
     def update(self, chosen_arm, reward):
         self.counts[chosen_arm] += 1
         n = float(self.counts[chosen_arm])
-
         value = self.values[chosen_arm]
         new_value = ((n - 1) / n) * value + (1 / n) * reward
         self.values[chosen_arm] = new_value

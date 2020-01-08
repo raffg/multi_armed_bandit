@@ -17,7 +17,7 @@ class EpsilonGreedy():
         if random.random() > self.epsilon:
             return np.argmax(self.values)
         else:
-            return random.randrange(len(self.values))
+            return random.randrange(self.n_arms)
 
     def update(self, chosen_arm, reward):
         self.counts[chosen_arm] += 1

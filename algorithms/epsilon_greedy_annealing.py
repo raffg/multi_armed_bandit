@@ -1,4 +1,5 @@
 import random
+import math
 import numpy as np
 
 
@@ -19,7 +20,7 @@ class EpsilonGreedyAnnealing():
         if random.random() > epsilon:
             return np.argmax(self.values)
         else:
-            return random.randrange(len(self.values))
+            return random.randrange(self.n_arms)
 
     def update(self, chosen_arm, reward):
         self.counts[chosen_arm] += 1

@@ -89,7 +89,7 @@ def plot_cumulative_reward(df_ave, algorithm_name, hyperparameter=None):
         plt.show()
         
         
-def plot_expected_reward(df, arms, arm_results, xlim=None, ylim=None):
+def plot_expected_reward(df, arms, arm_results, algorithm, xlim=None, ylim=None):
     plt.figure(figsize=(10, 10))
     if xlim:
         plt.xlim(left=0, right=xlim)
@@ -105,7 +105,7 @@ def plot_expected_reward(df, arms, arm_results, xlim=None, ylim=None):
     plt.legend()
     plt.xlabel('Number of Trials')
     plt.ylabel('Expected Reward')
-    plt.title('Expected Rewards of the Each Arm')
+    plt.title('Expected Rewards of the Each Arm, {}'.format(algorithm))
     plt.show()
 
 

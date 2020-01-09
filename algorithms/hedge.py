@@ -17,11 +17,13 @@ class Hedge():
         try:
             total = sum([math.exp(value / self.temperature) for value in self.values])
         except OverflowError:
-            total = float(1.0)
-        try:
-            probs = [math.exp(value / self.temperature) / total for value in self.values]
-        except OverflowError:
-            probs = [float(1.0) for value in self.values]
+            total = math.inf
+        probs = []
+        for value in self.values:
+            try:
+                probs.append(math.exp(value / self.temperature) / total)
+            except OverflowError:
+                probs.append(math.inf)
         threshold = random.random()
         cum_prob = 0.0
         for idx in range(len(probs)):

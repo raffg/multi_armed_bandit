@@ -1,5 +1,6 @@
 import math
 import numpy as np
+import random
 
 
 class UCB2():
@@ -52,7 +53,7 @@ class UCB2():
         for arm in range(self.n_arms):
             bonus = self.__bonus(total_counts, self.r[arm])
             ucb_values[arm] = self.values[arm] + bonus
-        chosen_arm = np.argmax(ucb_values)
+        chosen_arm = random.choice([i for i, val in enumerate(ucb_values) if val == max(ucb_values)])
         self.__set_arm(chosen_arm)
         return chosen_arm
 

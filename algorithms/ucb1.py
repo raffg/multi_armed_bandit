@@ -1,5 +1,6 @@
 import math
 import numpy as np
+import random
 
 
 class UCB1():
@@ -22,7 +23,7 @@ class UCB1():
         for arm in range(n_arms):
             curiosity_bonus = math.sqrt((2 * math.log(total_counts)) / float(self.counts[arm]))
             ucb_values[arm] = self.values[arm] + curiosity_bonus
-        return np.argmax(ucb_values)
+        return random.choice([i for i, val in enumerate(ucb_values) if val == max(ucb_values)])
 
     def update(self, chosen_arm, reward):
         self.counts[chosen_arm] += 1

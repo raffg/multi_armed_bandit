@@ -15,7 +15,6 @@ class EpsilonGreedy():
 
     def select_arm(self):
         if random.random() > self.epsilon:
-            return np.argmax(self.values)
             return random.choice([i for i, val in enumerate(self.values) if val == max(self.values)])
         else:
             return random.randrange(self.n_arms)

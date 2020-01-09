@@ -87,6 +87,20 @@ def plot_cumulative_reward(df_ave, algorithm_name, hyperparameter=None):
         plt.ylabel('Cumulative Reward')
         plt.title('Cumulative Reward of the {} Algorithm'.format(algorithm_name))
         plt.show()
+
+
+def plot_arms(df_ave, probabilities, algorithm_name):
+        probabilities = sorted(range(len(probabilities)), key=lambda k: probabilities[k], reverse=True)
+        plt.figure(figsize=(10, 7))
+        for arm in range(len(probabilities)):
+            plt.plot(df_ave['trial'],
+                     df_ave['arm_{}'.format(probabilities[arm])],
+                     label='arm_{}'.format(arm))
+        plt.legend(title='Sorted Arms')
+        plt.xlabel('Number of Trials')
+        plt.ylabel('Probability of Selecting Each Arm')
+        plt.title('Arm Selection Rate of the {} Algorithm'.format(algorithm_name))
+        plt.show()
         
         
 def plot_expected_reward(df, arms, arm_results, algorithm, xlim=None, ylim=None):

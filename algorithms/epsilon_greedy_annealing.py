@@ -18,7 +18,6 @@ class EpsilonGreedyAnnealing():
         t = sum(self.counts) + 1
         epsilon = 1 / math.log(t + self.annealing_factor)
         if random.random() > epsilon:
-            return np.argmax(self.values)
             return random.choice([i for i, val in enumerate(self.values) if val == max(self.values)])
         else:
             return random.randrange(self.n_arms)

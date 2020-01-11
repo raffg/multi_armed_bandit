@@ -103,7 +103,7 @@ def plot_arms(df_ave, probabilities, algorithm_name):
         plt.show()
         
         
-def plot_expected_reward(df, arms, arm_results, algorithm, xlim=None, ylim=None):
+def plot_expected_reward(arm_results, arms, algorithm, xlim=None, ylim=None):
     plt.figure(figsize=(10, 10))
     if xlim:
         plt.xlim(left=0, right=xlim)
@@ -130,7 +130,7 @@ def lookup_t(dof, alpha=.025):
 def build_confidence_interval(df, confidence_level=.95):
     confidence_level = confidence_level
     alpha = (1 - confidence_level) / 2
-    df['dof'] = df.index
+    df['dof'] = df.reset_index().index
     df['t_stat'] = df['dof'].apply(lookup_t, args=(alpha,))
     df['std'] = df['reward'].expanding(2).std()
     df['mean'] = df['reward'].expanding(2).mean()
@@ -145,5 +145,5 @@ def create_arm_results(df, arms, confidence_level):
     for arm in range(len(arms)):
         arm_results[arm] = build_confidence_interval(df[df['arm_{}'.format(arm)] == 1]. \
                                                      groupby('trial')[['reward', 'cumulative_reward']]. \
-                                                     mean().reset_index(), confidence_level)
+                                                     mean(), confidence_level)
     return arm_results

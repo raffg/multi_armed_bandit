@@ -4,20 +4,36 @@ from scipy import stats
 import matplotlib.pyplot as plt
 
 
-def format_results(results, arms):
-    df = pd.DataFrame(list(zip(*results)), columns=['sim_num', 'trial', 'chosen_arm', 'reward', 'cumulative_reward'])
-    for arm in range(len(arms)):
-        df['arm_{}'.format(arm)] = (df['chosen_arm'] == arm).astype(int)
-        df['arm_{}_cumulative'.format(arm)] = df.groupby((df.sim_num !=
-                                                          df.sim_num.shift())
-                                                         .cumsum())['arm_{}'.format(arm)].cumsum()
+def format_results(results, arms, beta_dist=False):
+    if beta_dist:
+        df = pd.DataFrame(list(zip(*results)), columns=['sim_num', 'trial', 'chosen_arm', 'reward', 'cumulative_reward', 'alphas', 'betas'])
+        alphas = pd.DataFrame(df['alphas'].values.tolist(), columns=['alpha_{}'.format(arm) for arm in range(len(df['alphas'].iloc[0]))])
+        betas = pd.DataFrame(df['betas'].values.tolist(), columns=['beta_{}'.format(arm) for arm in range(len(df['betas'].iloc[0]))])
+        for arm in range(len(arms)):
+            df['arm_{}'.format(arm)] = (df['chosen_arm'] == arm).astype(int)
+            df['arm_{}_cumulative'.format(arm)] = df.groupby((df.sim_num !=
+                                                              df.sim_num.shift())
+                                                             .cumsum())['arm_{}'.format(arm)].cumsum()
+            df['alpha_{}'.format(arm)] = alphas['alpha_{}'.format(arm)]
+            df['beta_{}'.format(arm)] = betas['beta_{}'.format(arm)]
+    else:
+        df = pd.DataFrame(list(zip(*results)), columns=['sim_num', 'trial', 'chosen_arm', 'reward', 'cumulative_reward'])
+        for arm in range(len(arms)):
+            df['arm_{}'.format(arm)] = (df['chosen_arm'] == arm).astype(int)
+            df['arm_{}_cumulative'.format(arm)] = df.groupby((df.sim_num !=
+                                                              df.sim_num.shift())
+                                                             .cumsum())['arm_{}'.format(arm)].cumsum()
     return df
 
 
-def summarize_results(results_df, arms, hyperparameter_list):
+def summarize_results(results_df, arms, hyperparameter_list, beta_dist=False):
+    if beta_dist:
+        alpha_beta = list(sum([('alpha_{}'.format(arm), 'beta_{}'.format(arm)) for arm in range(len(arms))], ()))
     arm_list = list(sum([('arm_{}'.format(arm), 'arm_{}_cumulative'.format(arm)) for arm in range(len(arms))], ()))
     agg_list = ['reward', 'cumulative_reward']
     agg_list.extend(arm_list)
+    if beta_dist:
+        agg_list.extend(alpha_beta)
     hyperparameter_list.append('trial')
     df_ave = results_df.groupby(hyperparameter_list)[agg_list].mean().reset_index()
     return df_ave
@@ -147,3 +163,16 @@ def create_arm_results(df, arms, confidence_level):
                                                      groupby('trial')[['reward', 'cumulative_reward']]. \
                                                      mean(), confidence_level)
     return arm_results
+
+
+def plot_beta_dist(df_ave, probabilities, idx):
+    plt.figure(figsize=(10, 7))
+    for arm in range(len(probabilities)):
+        x = np.arange (0, 1.001, 0.001)
+        y = stats.beta.pdf(x, df_ave['alpha_{}'.format(arm)].iloc[idx], df_ave['beta_{}'.format(arm)].iloc[idx])
+        plt.plot(x, y, label='arm_{}'.format(arm))
+    plt.legend()
+    plt.xlabel('Expected Reward')
+    plt.ylabel('Probability Desnity')
+    plt.title('Probability Distribution of Each Arm at Trial #{}'.format(idx))
+    plt.show()

@@ -8,24 +8,28 @@ class ThompsonSampling():
         self.counts = [0] * n_arms
         self.values = [0.0] * n_arms
         self.s_counts = [0] * n_arms
-        self.alpha = 1
-        self.beta = 1
+        self.alpha = [1] * n_arms
+        self.beta = [1] * n_arms
 
     def reset(self):
         self.counts = [0] * self.n_arms
         self.values = [0.0] * self.n_arms
         self.s_counts = [0] * self.n_arms
+        self.alpha = [1] * self.n_arms
+        self.beta = [1] * self.n_arms
 
     def select_arm(self):
-        rho = [random.betavariate(self.alpha + self.s_counts[i],
-                                  self.beta + self.counts[i] - self.s_counts[i]) for i in range(len(self.counts))]
+        rho = [random.betavariate(self.alpha[i], self.beta[i]) for i in range(self.n_arms)]
         return random.choice([i for i, v in enumerate(rho) if v == max(rho)])
 
     def update(self, chosen_arm, reward):
         self.counts[chosen_arm] += 1
-        if reward == 1:
-            self.s_counts[chosen_arm] += 1
+        self.alpha[chosen_arm] += reward
+        self.beta[chosen_arm] += 1 - reward
         n = float(self.counts[chosen_arm])
         value = self.values[chosen_arm]
         new_value = ((n - 1) / n) * value + (1 / n) * reward
         self.values[chosen_arm] = new_value
+        
+    def coeff(self):
+        return self.alpha, self.beta

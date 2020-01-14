@@ -7,9 +7,13 @@ class EXP3():
         self.gamma = gamma
         self.n_arms = n_arms
         self.weights = [1.0] * n_arms
+        self.alpha = [1] * n_arms
+        self.beta = [1] * n_arms
 
     def reset(self):
         self.weights = [1.0] * self.n_arms
+        self.alpha = [1] * self.n_arms
+        self.beta = [1] * self.n_arms
 
     def select_arm(self):
         total_weight = sum(self.weights)
@@ -26,6 +30,8 @@ class EXP3():
         return len(probs) - 1
 
     def update(self, chosen_arm, reward):
+        self.alpha[chosen_arm] += reward
+        self.beta[chosen_arm] += 1 - reward
         total_weight = sum(self.weights)
         x = reward / ((1 - self.gamma) * (self.weights[chosen_arm] / total_weight) + (self.gamma / float(self.n_arms)))
 

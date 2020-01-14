@@ -30,6 +30,3 @@ class ThompsonSampling():
         value = self.values[chosen_arm]
         new_value = ((n - 1) / n) * value + (1 / n) * reward
         self.values[chosen_arm] = new_value
-        
-    def coeff(self):
-        return self.alpha, self.beta

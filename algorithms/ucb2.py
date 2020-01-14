@@ -4,14 +4,16 @@ import random
 
 
 class UCB2():
-    def __init__(self, alpha, n_arms):
-        self.alpha = alpha
+    def __init__(self, alpha_param, n_arms):
+        self.alpha_param = alpha_param
         self.n_arms = n_arms
         self.counts = [0] * n_arms
         self.values = [0.0] * n_arms
         self.r = [0] * n_arms
         self.__current_arm = 0
         self.__next_update = 0
+        self.alpha = [1] * n_arms
+        self.beta = [1] * n_arms
 
     def reset(self):
         self.counts = [0] * self.n_arms
@@ -19,13 +21,15 @@ class UCB2():
         self.r = [0] * self.n_arms
         self.__current_arm = 0
         self.__next_update = 0
+        self.alpha = [1] * self.n_arms
+        self.beta = [1] * self.n_arms
         
     def __tau(self, r):
-        return int(math.ceil((1 + self.alpha) ** r))
+        return int(math.ceil((1 + self.alpha_param) ** r))
     
     def __bonus(self, n, r):
         tau = self.__tau(r)
-        bonus = math.sqrt((1. + self.alpha) * math.log(math.e * float(n) / tau) / (2 * tau))
+        bonus = math.sqrt((1. + self.alpha_param) * math.log(math.e * float(n) / tau) / (2 * tau))
         return bonus
   
     def __set_arm(self, arm):
@@ -59,6 +63,8 @@ class UCB2():
 
     def update(self, chosen_arm, reward):
         self.counts[chosen_arm] += 1
+        self.alpha[chosen_arm] += reward
+        self.beta[chosen_arm] += 1 - reward
         n = float(self.counts[chosen_arm])
         value = self.values[chosen_arm]
         new_value = ((n - 1) / n) * value + (1 / n) * reward

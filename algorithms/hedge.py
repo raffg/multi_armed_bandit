@@ -8,10 +8,14 @@ class Hedge():
         self.n_arms = n_arms
         self.counts = [0] * n_arms
         self.values = [0.0] * n_arms
+        self.alpha = [1] * n_arms
+        self.beta = [1] * n_arms
 
     def reset(self):
         self.counts = [0] * self.n_arms
         self.values = [0.0] * self.n_arms
+        self.alpha = [1] * self.n_arms
+        self.beta = [1] * self.n_arms
 
     def select_arm(self):
         try:
@@ -35,4 +39,6 @@ class Hedge():
 
     def update(self, chosen_arm, reward):
         self.counts[chosen_arm] += 1
+        self.alpha[chosen_arm] += reward
+        self.beta[chosen_arm] += 1 - reward
         self.values[chosen_arm] += reward

@@ -1,5 +1,11 @@
 import pandas as pd
 import numpy as np
+import os
+import shutil
+import math
+import imageio
+from IPython.display import Image
+import re
 from scipy import stats
 import matplotlib.pyplot as plt
 
@@ -155,14 +161,80 @@ def create_arm_results(df, arms, confidence_level):
     return arm_results
 
 
-def plot_beta_dist(df_ave, probabilities, idx, algorithm):
+def plot_beta_dist(df_ave, probabilities, idx, algorithm, legend_loc='upper left'):
     plt.figure(figsize=(10, 7))
     for arm in range(len(probabilities)):
         x = np.arange (0, 1.001, 0.001)
         y = stats.beta.pdf(x, df_ave['alpha_{}'.format(arm)].iloc[idx], df_ave['beta_{}'.format(arm)].iloc[idx])
         plt.plot(x, y, label='arm_{}'.format(arm))
-    plt.legend()
+    plt.legend(loc=legend_loc)
     plt.xlabel('Expected Reward')
-    plt.ylabel('Probability Desnity')
-    plt.title('Probability Distribution of Each Arm at Trial #{}, {}'.format(idx, algorithm))
+    plt.ylabel('Probability Density')
+    plt.yticks([])
+    plt.title('Probability Distribution of Each Arm, {}'.format(algorithm))
+    plt.savefig('images_for_gif/{}.png'.format(idx), bbox_inches='tight')
+    plt.close()
+    
+    
+def create_gif(algorithm, folder='images_for_gif'):
+    filenames = os.listdir(folder)
+    filenames = sorted([int(re.sub('[^0-9]', '', filename)) if re.search('[0-9]', filename) else math.inf for filename in filenames])
+    if math.inf in filenames:
+        filenames.remove(math.inf)
+    images = []
+    for filename in filenames:
+        filename = '{}/{}.png'.format(folder, filename)
+        images.append(imageio.imread(filename))
+    imageio.mimsave('gifs/{}.gif'.format(algorithm), images)
+    delete_folder_contents(folder)
+#     with open('gifs/{}.gif'.format(algorithm),'rb') as f:
+#         display(Image(data=f.read(), format='png'))
+
+
+def plot_beta_grid(df_ave, probabilities, algorithm, horizon, grid_length):
+    indices = geomspace_indices(horizon, grid_length**2)
+
+    fig, ax = plt.subplots(grid_length, grid_length, figsize=(15, 15), facecolor='w', edgecolor='k')
+    fig.subplots_adjust(hspace = .5, wspace=.1)
+    fig.suptitle('Probability Distribution of Each Arm, {}'.format(algorithm), fontsize=20, y=1.02)
+    fig.subplots_adjust(top=0.88)
+
+    ax = ax.ravel()
+
+    for axis, idx in enumerate(indices):
+        for arm in range(len(probabilities)):
+            x = np.arange (0, 1.001, 0.001)
+            y = stats.beta.pdf(x, df_ave['alpha_{}'.format(arm)].iloc[idx], df_ave['beta_{}'.format(arm)].iloc[idx])
+            ax[axis].plot(x, y, label='arm_{}'.format(arm))
+        ax[axis].set_title('Trial #{}'.format(idx))
+
+    handles, labels = ax[axis].get_legend_handles_labels()
+    fig.legend(handles, labels, loc='best')
+    fig.text(0.5, -.01, 'Expected Reward', ha='center', fontsize=20)
+    fig.text(-.01, 0.5, 'Probability Density', va='center', rotation='vertical', fontsize=20)
+    fig.tight_layout()
     plt.show()
+
+    
+def geomspace_indices(horizon, number):
+    indices = [0]
+    indices.extend(np.geomspace(1, horizon-1, number-1))
+    indices = [int(round(idx)) for idx in indices]
+    for idx in range(len(indices)):
+        if idx == 0:
+            continue
+        if indices[idx] <= indices[idx-1]:
+            indices[idx] = indices[idx-1] + 1
+    return indices
+
+
+def delete_folder_contents(folder):
+    for filename in os.listdir(folder):
+        file_path = os.path.join(folder, filename)
+        try:
+            if os.path.isfile(file_path) or os.path.islink(file_path):
+                os.unlink(file_path)
+            elif os.path.isdir(file_path):
+                shutil.rmtree(file_path)
+        except Exception as e:
+            print('Failed to delete %s. Reason: %s' % (file_path, e))

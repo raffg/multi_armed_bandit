@@ -119,7 +119,11 @@ So now, let’s take a look at all those algorithms together. As you can see, in
 ![Performance Comparison](images/comparison_performance.png)
 ![Reward Comparison](images/comparison_reward.png)
 
-There’s one algorithm in those charts which we haven’t discussed yet, **[Thompson Sampling](https://github.com/raffg/multi_armed_bandit/blob/master/algorithms/thompson_sampling.py)**. This algorithm is fully Bayesian. It generates a vector of expected rewards for each arm from a posterior distribution and then updates the distributions. It simply pulls the lever with the highest expected reward at each trial. Thompson Sampling, in my experiments, learned *very* quickly which was the best arm and *heavily* favored it going forward, at the expense of exploration. Just look at the uncertainty (the width of the shaded area) in all the other arms! That’s the result of nearly pure exploitation and no exploration.
+There’s one algorithm in those charts which we haven’t discussed yet, **[Thompson Sampling](https://github.com/raffg/multi_armed_bandit/blob/master/algorithms/thompson_sampling.py)**. This algorithm is fully Bayesian. It generates a vector of expected rewards for each arm from a posterior distribution and then updates the distributions.
+
+![Thompson Sampling Arm Distributions](images/thompson_sampling_arm_distribution.png)
+
+The algorithm draws a random number from the changing probability distributions and selects the largest. It simply pulls the lever with the highest expected reward at each trial. Thompson Sampling, in my experiments, learned *very* quickly which was the best arm and *heavily* favored it going forward, at the expense of exploration. Just look at the uncertainty (the width of the shaded area) in all the other arms! That’s the result of nearly pure exploitation and no exploration.
 
 ![Expected Reward of Thompson Sampling](images/thompson_sampling_expected_rewards.png)
 

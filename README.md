@@ -1,9 +1,9 @@
 # A/B testing — Is there a better way? An exploration of multi-armed bandits
-## The algorithms of Epsilon-Greedy, Softmax, UCB, and Exp3
+## The algorithms of Epsilon-Greedy, Softmax, UCB, Exp3, and Thompson Sampling
 
 ![Photo by Benoit Dare on Unsplash](images/benoit-dare-wPXEQz40f8s-unsplash.jpg)
 
-In this repo, I’ve simulated a traditional A/B test and here discuss its shortcomings, then I’ve simulated some different multi-armed bandit algorithms which can alleviate many of the problems with a traditional A/B test, and I've compared them.
+In this repo, I’ve simulated a traditional A/B test and here discuss its shortcomings, then I’ve simulated some different multi-armed bandit algorithms which can alleviate many of the problems with a traditional A/B test. Finally, I've discussed the termination criteria for the specific case of Thompson Sampling.
 
 ### Part 1: Traditional A/B testing
 Websites today are meticulously designed to maximize one or even several goals. Should the “Buy Now!” button be red or blue? What headline attracts the most clicks to that news article? Which version of an advertisement has the highest click-through rate? To determine the optimal answer to these questions, software developers employ A/B tests — a statistically sound technique to compare two different variants, version A and version B. Essentially, they’re trying to determine whether the mean value in the blue distribution below is actually different than the mean value of the red distribution, or is that apparent difference actually just due to random chance?
@@ -123,12 +123,29 @@ There’s one algorithm in those charts which we haven’t discussed yet, **[Tho
 
 ![Thompson Sampling Arm Distributions](images/thompson_sampling_arm_distribution.png)
 
-The algorithm draws a random number from the changing probability distributions and selects the largest. It simply pulls the lever with the highest expected reward at each trial. Thompson Sampling, in my experiments, learned *very* quickly which was the best arm and *heavily* favored it going forward, at the expense of exploration. Just look at the uncertainty (the width of the shaded area) in all the other arms! That’s the result of nearly pure exploitation and no exploration.
+The algorithm draws a random number from the changing probability distributions and selects the largest. It simply pulls the lever with the highest expected reward at each trial. Thompson Sampling, in my experiments, learned *very* quickly which was the best arm and *heavily* favored it going forward, at the expense of exploration. Just look at the uncertainty (the width of the shaded area) in all the other arms! That’s the result of nearly pure exploitation and little exploration.
 
 ![Expected Reward of Thompson Sampling](images/thompson_sampling_expected_rewards.png)
 
-In fact, the reason I’ve not included more charts for Thompson Sampling is because they are so heavily favored towards one arm that there isn’t much to see. However, if interested you can view them all in the [images folder](https://github.com/raffg/multi_armed_bandit/tree/master/images).
+### When do you end your multi-armed bandit experiment?
+Because Thompson Sampling draws from arms at the frequency given by their beta distribution, we can use many statistical techniques of uncertainty to know when one arm surges ahead due to superiority as opposed to chance. Google Analytics has developed a sound solution using what they call **[Potential Value Remaining](https://support.google.com/optimize/answer/7405044?hl=en)**. They first check for three criteria to be met, and then check that a "champion" arm has emerged, and call the experiment complete. Those three criteria are:
+
+- There is active daily traffic on the website
+- The experiment has run a minimum of two weeks, in order to cancel out any weekly periodicity.
+- Potential Value Remaining is less than 1%
+
+At that point, once any arm is selected at least 95% of the time, the experiment concludes.
+
+Potential Value Remaining is also called "regret" in the literature. It describes how much a metric such as CTR may still improve above the leader. When the chance that another arm may beat the leader by only 1% more, that meager improvement isn't worth continuing the test.
+
+Potential value remaining in the test is calculated as the 95th percentile of the distribution of `(θₘₐₓ - θ*) / θ*`, where `θₘₐₓ` is the largest value of `θ` in a row, and `θ*` is the value of `θ` for the variation that is most likely to be optimal, with `θ` being the value drawn from each arm's beta distribution. As before, for the details of the math please refer to my [code](https://github.com/raffg/multi_armed_bandit/blob/master/simulation_framework/simulation_framework.py), or read the [original paper](https://static.googleusercontent.com/media/research.google.com/en//pubs/archive/42550.pdf) published by a Google engineer.
+
+In the traditional A/B test I described at the beginning of this article, with a confidence interval of 95%, power of 80%, version A CTR of 1%, and hypothesizing a version B CTR of 1.05%, the required sample size was a minimum of **635,829** sample draws from each version. In my experiment, I rounded up to 700,000 draws for each arm.
+
+When using Thompson Sampling with Google's termination criteria, I simulated 100 experiments and averaged the results. I was able to achieve the same certainty that version B was 5% better with an average of **18,179** pulls on the inferior version A arm, and 981,820 pulls on the superior version B.
+
+> **In the traditional A/B test, I would have served my customers an inferior version of my website over 600,000 times, whereas Thompson Sampling required just over 18,000 to learn the same thing. That's 33x fewer mistakes!**
 
 ---
 
-So which arm is best? It really depends upon your application and needs. They all have their benefits and drawbacks and suitability to specific cases. Epsilon-Greedy and Softmax were early developments in the field and tend not to perform as well as, in particular, the Upper Confidence Bound algorithms. In the realm of web testing, the UCB algorithms do seem to be used most frequently. If your context is not stochastic though, you may want to try the Exp3 algorithm which performs better in an adversarial environment.
+So which bandit is best? It really depends upon your application and needs. They all have their benefits and drawbacks and suitability to specific cases. Epsilon-Greedy and Softmax were early developments in the field and tend not to perform as well as, in particular, the Upper Confidence Bound algorithms. In the realm of web testing, the UCB algorithms do seem to be used most frequently although Thompson Sampling offers the benefits of termination criteria and is the algorithm used by Google Analytics' Optimize tool. If your context is not stochastic though, you may want to try the Exp3 algorithm which performs better in an adversarial environment.

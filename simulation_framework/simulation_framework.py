@@ -63,8 +63,11 @@ def run_sim(algorithm, arms, horizon, num_sims=1, stopping=False, confidence=.95
 #                 print('Optimal arm probability: {}'.format(optimal_arm_prob))
 #                 print('Potential value remaining: {}'.format(potential_value_remaining))
                 skipped_iters = [idx for idx in range(1, length - 1) if ((trials[idx] == 0) and (trials[idx + 1] == 0))]
-                if trials[length] == 0:
-                    skipped_iters.apppend(length)
+                try:
+                    if trials[length] == 0:
+                        skipped_iters.append(length)
+                except IndexError:
+                    continue
                 for idx in sorted(skipped_iters, reverse=True):
                     del sim_nums[idx]
                     del trials[idx]

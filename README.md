@@ -142,9 +142,9 @@ Potential value remaining in the test is calculated as the 95th percentile of th
 
 In the traditional A/B test I described at the beginning of this article, with a confidence interval of 95%, power of 80%, version A CTR of 1%, and hypothesizing a version B CTR of 1.05%, the required sample size was a minimum of **635,829** sample draws from each version. In my experiment, I rounded up to 700,000 draws for each arm.
 
-When using Thompson Sampling with Google's termination criteria, I simulated 100 experiments and averaged the results. I was able to achieve the same certainty that version B was 5% better with an average of **18,179** pulls on the inferior version A arm, and 981,820 pulls on the superior version B.
+When using Thompson Sampling with Google's termination criteria, I simulated 100 experiments and averaged the results. I was able to achieve the same certainty that version B was 5% better with an average of **5,357** pulls on the inferior version A arm, and 6,353 pulls on the superior version B.
 
-> **In the traditional A/B test, I would have served my customers an inferior version of my website over 600,000 times, whereas Thompson Sampling required just over 18,000 to learn the same thing. That's 33x fewer mistakes!**
+> **In the traditional A/B test, I would have served my customers an inferior version of my website over 600,000 times, whereas Thompson Sampling required just over 5,000 to learn the same thing. That's 120x fewer mistakes!**
 
 ---
 

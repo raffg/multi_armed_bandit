@@ -14,12 +14,15 @@ def run_sim(algorithm, arms, horizon, num_sims=1, terminate=False, confidence=.9
     optimal_arm_prob = 0
     potential_value_remaining = 1
     pvr_list = deque([0] * 100)
+    previous_idx = 0
+    previous_idx_flag = False
     
     for sim in range(num_sims):
         algorithm.reset()
-        
         for t in range(horizon):
             idx = sim * horizon + t
+            if previous_idx_flag:
+                idx = previous_idx + t
             sim_nums.append(sim)
             trials.append(t)
             
@@ -36,6 +39,8 @@ def run_sim(algorithm, arms, horizon, num_sims=1, terminate=False, confidence=.9
                     if potential_value_remaining < regret:
                         optimal_arm_prob = probability_of_expected_best_arm(algorithm, expected_best_arm)
                         if optimal_arm_prob > confidence:
+                            previous_idx_flag = True
+                            previous_idx = idx - 1
                             break
                 chosen_arm = random.choice([i for i, v in enumerate(rhos) if v == max(rhos)])
 
@@ -51,6 +56,8 @@ def run_sim(algorithm, arms, horizon, num_sims=1, terminate=False, confidence=.9
             else:
                 cumulative_rewards.append(cumulative_rewards[idx - 1] + reward)
             algorithm.update(chosen_arm, reward)
+            if t == horizon - 1:
+                previous_idx_flag = False
     
 #         if 'Thompson' in str(algorithm):
 #             if terminate:

@@ -1,81 +1,65 @@
 import random
+from collections import deque
 
 
-def run_sim(algorithm, arms, horizon, num_sims=1, stopping=False, confidence=.95, regret=.01):
+def run_sim(algorithm, arms, horizon, num_sims=1, terminate=False, confidence=.95, regret=.01, min_trials=1000):
     
-    length = num_sims * horizon
-    
-    chosen_arms = [0] * length
-    rewards = [0] * length
-    cumulative_rewards = [0] * length
-    sim_nums = [0] * length
-    trials = [0] * length
-    alpha = [[0] * len(arms)] * length
-    beta = [[0] * len(arms)] * length
+    chosen_arms = []
+    rewards = []
+    cumulative_rewards = []
+    sim_nums = []
+    trials = []
+    alpha = []
+    beta = []
     optimal_arm_prob = 0
     potential_value_remaining = 1
+    pvr_list = deque([0] * 100)
     
     for sim in range(num_sims):
         algorithm.reset()
         
         for t in range(horizon):
             idx = sim * horizon + t
-            sim_nums[idx] = sim
-            trials[idx] = t
+            sim_nums.append(sim)
+            trials.append(t)
             
             if 'Thompson' in str(algorithm):
                 rhos = algorithm.select_arm().copy()
-                chosen_arm = random.choice([i for i, v in enumerate(rhos) if v == max(rhos)])
-                if stopping:
-                    if t > 1000:
-                        if (optimal_arm_prob > confidence) and (potential_value_remaining < regret):
-                            break
-
-                    expected_rewards = [algorithm.alpha[idx] / (algorithm.alpha[idx] + algorithm.beta[idx]) for idx in range(len(algorithm.alpha))]
+                if (t > min_trials) and terminate:
+                    expected_rewards = [alpha[idx-1][i] / (alpha[idx-1][i] + beta[idx-1][i]) for i in range(len(alpha[idx-1]))]
                     expected_best_arm = expected_rewards.index(max(expected_rewards))
-                    if expected_best_arm != rhos.index(max(rhos)):
-                        theta_star = rhos[expected_best_arm]
-                        theta_max = max(rhos)
-                        potential_value_remaining = (theta_max - theta_star) / theta_star
-                    if t % 100 == 0:
+                    theta_max = max(rhos)
+                    theta_star = rhos[expected_best_arm]
+                    pvr_list.popleft()
+                    pvr_list.append((theta_max - theta_star) / theta_star)
+                    potential_value_remaining = 0 if sum(pvr_list) == 0 else [i for i in pvr_list if i > 0][-1]
+                    if potential_value_remaining < regret:
                         optimal_arm_prob = probability_of_expected_best_arm(algorithm, expected_best_arm)
+                        if optimal_arm_prob > confidence:
+                            break
+                chosen_arm = random.choice([i for i, v in enumerate(rhos) if v == max(rhos)])
 
             else:
                 chosen_arm = algorithm.select_arm()
-            chosen_arms[idx] = chosen_arm
-            
-            reward = arms[chosen_arms[idx]].draw()
-            rewards[idx] = reward
-            
-            alpha[idx] = algorithm.alpha.copy()
-            beta[idx] = algorithm.beta.copy()
-                
+            chosen_arms.append(chosen_arm)
+            reward = arms[chosen_arm].draw()
+            rewards.append(reward)
+            alpha.append(algorithm.alpha.copy())
+            beta.append(algorithm.beta.copy())
             if t == 0:
-                cumulative_rewards[idx] = reward
+                cumulative_rewards.append(reward)
             else:
-                cumulative_rewards[idx] = cumulative_rewards[idx - 1] + reward
-                
+                cumulative_rewards.append(cumulative_rewards[idx - 1] + reward)
             algorithm.update(chosen_arm, reward)
     
-        if 'Thompson' in str(algorithm):
-            if stopping:
-#                 print('The experiment ended after {} trials'.format(t + 1))
+#         if 'Thompson' in str(algorithm):
+#             if terminate:
+#                 if t + 2 <= horizon:
+#                     print('The experiment ended after {} trials'.format(t + 1))
+#                 else:
+#                     print('The experiment ended at the horizon')
 #                 print('Optimal arm probability: {}'.format(optimal_arm_prob))
 #                 print('Potential value remaining: {}'.format(potential_value_remaining))
-                skipped_iters = [idx for idx in range(1, length - 1) if ((trials[idx] == 0) and (trials[idx + 1] == 0))]
-                try:
-                    if trials[length] == 0:
-                        skipped_iters.append(length)
-                except IndexError:
-                    continue
-                for idx in sorted(skipped_iters, reverse=True):
-                    del sim_nums[idx]
-                    del trials[idx]
-                    del chosen_arms[idx]
-                    del rewards[idx]
-                    del cumulative_rewards[idx]
-                    del alpha[idx]
-                    del beta[idx]
     
     return sim_nums, trials, chosen_arms, rewards, cumulative_rewards, alpha, beta
 
@@ -87,7 +71,7 @@ def probability_of_expected_best_arm(algorithm, expected_best_arm):
     while count < 1000:
         if count > 100:
             if abs(prob_new - prob) < .001:
-                break
+                return prob_new
         count +=1
         prob = prob_new
         rhos = algorithm.select_arm().copy()
